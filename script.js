@@ -17,6 +17,10 @@ function multiply(op1, op2) {
   return op1 * op2;
 }
 function divide(op1, op2) {
+  if (op2 === 0) {
+    return "Error: Division by zero";
+    console.log("Error:division by zero");
+  }
   return op1 / op2;
 }
 
@@ -68,6 +72,7 @@ const digits = [
   elements.eight,
   elements.nine,
   elements.zero,
+  elements.decimal,
 ];
 const operators = [
   elements.plusOp,
@@ -105,17 +110,31 @@ function getOperator() {
 function clearDisplay() {
   displayValue = "";
   elements.output.value = "";
+  op1 = "";
+  op2 = "";
 }
+
+elements.clear.addEventListener("click", () => {
+  clearDisplay();
+});
 
 getOperand();
 getOperator();
 
+function performCalculation() {
+  if (op1 && op2 && selectedOperator) {
+    result = operate(selectedOperator, parseFloat(op1), parseFloat(op2));
+    displayValue = result.toString();
+    elements.output.value = displayValue;
+    op1 = result;
+    op2 = "";
+  }
+}
+
 elements.equalsOp.addEventListener("click", () => {
+  op2 = displayValue;
   console.log(`op1=${op1}`);
   console.log(`op2=${op2}`);
   console.log(`SelectedOperator=${selectedOperator}`);
-  op2 = displayValue;
-  result = operate(selectedOperator, parseFloat(op1), parseFloat(op2));
-  displayValue = result;
-  elements.output.value = displayValue;
+  performCalculation();
 });
