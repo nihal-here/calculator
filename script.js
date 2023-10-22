@@ -1,140 +1,137 @@
-let op1,
-  op2,
-  result,
-  selectedOperator,
-  displayValue = "",
-  op1Active = true;
+let op1 = "";
+let op2 = "";
+let currentOperation = null;
+let shouldResetScreen = false;
 
-function add(op1, op2) {
-  return op1 + op2;
-}
+const numberButtons = document.querySelectorAll("[data-number]");
+const operatorButtons = document.querySelectorAll("[data-operator]");
+const clearButton = document.querySelector("#clearBtn");
+const deleteButton = document.querySelector("#deleteBtn");
+const pointButton = document.querySelector("#pointBtn");
+const equalsButton = document.querySelector("#equalsBtn");
+const lastOperationScreen = document.querySelector("#lastOperationScreen");
+const currentOperationScreen = document.querySelector(
+  "#currentOperationScreen"
+);
 
-function subtract(op1, op2) {
-  return op1 - op2;
-}
+window.addEventListener("keydown", handleKeyboardInput);
+equalsButton.addEventListener("click", evaluate);
+clearButton.addEventListener("click", clear);
+deleteButton.addEventListener("click", deleteNumber);
+pointButton.addEventListener("click", appendPoint);
 
-function multiply(op1, op2) {
-  return op1 * op2;
-}
-function divide(op1, op2) {
-  if (op2 === 0) {
-    return "Error: Division by zero";
-    console.log("Error:division by zero");
-  }
-  return op1 / op2;
-}
-
-function operate(operator, op1, op2) {
-  if (operator === "plusOp") {
-    return add(op1, op2);
-  } else if (operator === "minusOp") {
-    return subtract(op1, op2);
-  } else if (operator === "multiplyOp") {
-    return multiply(op1, op2);
-  } else if (operator === "divideOp") {
-    return divide(op1, op2);
-  }
-}
-
-const buttons = [
-  "one",
-  "two",
-  "three",
-  "four",
-  "five",
-  "six",
-  "seven",
-  "eight",
-  "nine",
-  "zero",
-  "clear",
-  "decimal",
-  "plusOp",
-  "minusOp",
-  "multiplyOp",
-  "equalsOp",
-  "divideOp",
-  "output",
-];
-const elements = {};
-buttons.forEach((button) => {
-  elements[button] = document.querySelector(`#${button}`);
+numberButtons.forEach((button) => {
+  button.addEventListener("click", () => appendNumber(button.textContent));
 });
 
-const digits = [
-  elements.one,
-  elements.two,
-  elements.three,
-  elements.four,
-  elements.five,
-  elements.six,
-  elements.seven,
-  elements.eight,
-  elements.nine,
-  elements.zero,
-  elements.decimal,
-];
-const operators = [
-  elements.plusOp,
-  elements.minusOp,
-  elements.divideOp,
-  elements.multiplyOp,
-];
+operatorButtons.forEach((button) => {
+  button.addEventListener("click", () => setOperation(button.textContent));
+});
 
-function getOperand() {
-  output.textContent = "";
-  digits.forEach((digit) => {
-    digit.addEventListener("click", () => {
-      displayValue += digit.textContent;
-      elements.output.value = displayValue;
-    });
-  });
+function appendNumber(number) {
+  if (currentOperationScreen === 0 || shouldResetScreen) resetScreen();
+  currentOperationScreen.textContent += number;
 }
 
-function getOperator() {
-  operators.forEach((operator) => {
-    operator.addEventListener("click", () => {
-      selectedOperator = operator.id;
-      if (op1Active) {
-        op1 = displayValue;
-        op1Active = false;
-      } else {
-        op2 = displayValue;
-        op1Active = true;
-      }
-      displayValue = "";
-    });
-  });
+function resetScreen() {
+  currentOperationScreen.textContent = "";
+  shouldResetScreen = false;
 }
 
-function clearDisplay() {
-  displayValue = "";
-  elements.output.value = "";
+function clear() {
+  currentOperationScreen.textContent = "0";
+  lastOperationScreen.textContent = "";
   op1 = "";
   op2 = "";
+  currentOperation = null;
 }
 
-elements.clear.addEventListener("click", () => {
-  clearDisplay();
-});
+function appendPoint() {
+  if (shouldResetScreen) resetScreen();
+  if (currentOperationScreen.textContent === "")
+    currentOperation.textContent = "0";
+  if (currentOperationScreen.textContent.includes("."))
+    return (currentOperation.textContent += ".");
+}
 
-getOperand();
-getOperator();
+function deleteNumber() {
+  currentOperationScreen.textContent = currentOperationScreen.textContent
+    .toString()
+    .slice(0, -1);
+}
 
-function performCalculation() {
-  if (op1 && op2 && selectedOperator) {
-    result = operate(selectedOperator, parseFloat(op1), parseFloat(op2));
-    displayValue = result.toString();
-    elements.output.value = displayValue;
-    op1 = result;
-    op2 = "";
+function setOperation(operator) {
+  if (currentOperation !== null) evaluate();
+  op1 = currentOperationScreen.textContent;
+  currentOperation = operator;
+  lastOperationScreen.textContent = `${op1} ${currentOperation}`;
+  shouldResetScreen = true;
+}
+
+function evaluate() {
+  if (currentOperation === null || shouldResetScreen) return;
+  if (currentOperation === "÷" && currentOperationScreen.textContent === "0") {
+    alert("You can't divide by zero");
+    return;
+  }
+  op2 = currentOperationScreen.textContent;
+  currentOperationScreen.textContent = roundResult(
+    operate(currentOperation, op1, op2)
+  );
+  lastOperationScreen.textContent = `${op1} ${currentOperation} ${op2}=`;
+  currentOperation = null;
+}
+
+function roundResult(nummber) {
+  Math.round(number * 1000) / 1000;
+}
+
+function handleKeyboardInput(e) {
+  if (e.key >= 0 && e.key <= 9) appendNumber(e.key);
+  if (e.key === ".") appendPoint();
+  if (e.key === "=" || e.key === "enter") evaluate();
+  if (e.key === "Backspace") deleteNumber();
+  if (e.key === "Escape") clear();
+  if (e.key === "+" || e.key === "-" || e.key === "*" || e.key === "/") {
+    setOperation(convertOperator(e.key));
   }
 }
+function convertOperator(keyboardOperator) {
+  if (keyboardOperator === "/") return "÷";
+  if (keyboardOperator === "*") return "×";
+  if (keyboardOperator === "+") return "+";
+  if (keyboardOperator === "-") return "-";
+}
 
-elements.equalsOp.addEventListener("click", () => {
-  op2 = displayValue;
-  console.log(`op1=${op1}`);
-  console.log(`op2=${op2}`);
-  console.log(`SelectedOperator=${selectedOperator}`);
-  performCalculation();
-});
+function add(a, b) {
+  return a + b;
+}
+
+function subtract(a, b) {
+  return a - b;
+}
+
+function multiply(a, b) {
+  return a * b;
+}
+function divide(a, b) {
+  return a / b;
+}
+
+function operate(operator, a, b) {
+  a = Number(a);
+  b = Number(b);
+  switch (operator) {
+    case "+":
+      return add(a, b);
+    case "-":
+      return subtract(a, b);
+    case "×":
+      return multiply(a, b);
+    case "÷":
+      if (b == 0) return null;
+      else return divide(a, b);
+    default:
+      return null;
+  }
+}
