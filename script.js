@@ -29,7 +29,8 @@ operatorButtons.forEach((button) => {
 });
 
 function appendNumber(number) {
-  if (currentOperationScreen === 0 || shouldResetScreen) resetScreen();
+  if (currentOperationScreen.textContent === "0" || shouldResetScreen)
+    resetScreen();
   currentOperationScreen.textContent += number;
 }
 
@@ -49,9 +50,9 @@ function clear() {
 function appendPoint() {
   if (shouldResetScreen) resetScreen();
   if (currentOperationScreen.textContent === "")
-    currentOperation.textContent = "0";
-  if (currentOperationScreen.textContent.includes("."))
-    return (currentOperation.textContent += ".");
+    currentOperationScreen.textContent = "0";
+  if (currentOperationScreen.textContent.includes(".")) return;
+  currentOperationScreen.textContent += ".";
 }
 
 function deleteNumber() {
@@ -71,7 +72,7 @@ function setOperation(operator) {
 function evaluate() {
   if (currentOperation === null || shouldResetScreen) return;
   if (currentOperation === "÷" && currentOperationScreen.textContent === "0") {
-    alert("You can't divide by zero");
+    alert("You can't divide by 0!");
     return;
   }
   op2 = currentOperationScreen.textContent;
@@ -82,14 +83,14 @@ function evaluate() {
   currentOperation = null;
 }
 
-function roundResult(nummber) {
-  Math.round(number * 1000) / 1000;
+function roundResult(number) {
+  return Math.round(number * 1000) / 1000;
 }
 
 function handleKeyboardInput(e) {
   if (e.key >= 0 && e.key <= 9) appendNumber(e.key);
   if (e.key === ".") appendPoint();
-  if (e.key === "=" || e.key === "enter") evaluate();
+  if (e.key === "=" || e.key === "Enter") evaluate();
   if (e.key === "Backspace") deleteNumber();
   if (e.key === "Escape") clear();
   if (e.key === "+" || e.key === "-" || e.key === "*" || e.key === "/") {
@@ -129,8 +130,10 @@ function operate(operator, a, b) {
     case "×":
       return multiply(a, b);
     case "÷":
-      if (b == 0) return null;
-      else return divide(a, b);
+      if (b === 0) return null;
+      else {
+        return divide(a, b);
+      }
     default:
       return null;
   }
