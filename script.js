@@ -2,7 +2,7 @@ let op1 = "";
 let op2 = "";
 let currentOperation = null;
 let shouldResetScreen = false;
-
+let percentageButtonClicked = false;
 const numberButtons = document.querySelectorAll("[data-number]");
 const operatorButtons = document.querySelectorAll("[data-operator]");
 const clearButton = document.querySelector("#clearBtn");
@@ -13,12 +13,19 @@ const lastOperationScreen = document.querySelector("#lastOperationScreen");
 const currentOperationScreen = document.querySelector(
   "#currentOperationScreen"
 );
+const percentageButton = document.querySelector("#percentBtn");
+const plusMinusButton = document.querySelector("#plusMinusBtn");
 
 window.addEventListener("keydown", handleKeyboardInput);
 equalsButton.addEventListener("click", evaluate);
 clearButton.addEventListener("click", clear);
 deleteButton.addEventListener("click", deleteNumber);
 pointButton.addEventListener("click", appendPoint);
+plusMinusButton.addEventListener("click", toggleSign);
+percentageButton.addEventListener("click", () => {
+  percentageButtonClicked = true;
+  applyPercentage();
+});
 
 numberButtons.forEach((button) => {
   button.addEventListener("click", () => appendNumber(button.textContent));
@@ -47,6 +54,16 @@ function clear() {
   currentOperation = null;
 }
 
+function toggleSign() {
+  if (currentOperationScreen.textContent === "0" || shouldResetScreen)
+    resetScreen();
+  if (currentOperationScreen.textContent[0] === "-")
+    currentOperationScreen.textContent =
+      currentOperationScreen.textContent.slice(1);
+  else
+    currentOperationScreen.textContent =
+      "-" + currentOperationScreen.textContent;
+}
 function appendPoint() {
   if (shouldResetScreen) resetScreen();
   if (currentOperationScreen.textContent === "")
@@ -75,7 +92,12 @@ function evaluate() {
     alert("You can't divide by 0!");
     return;
   }
-  op2 = currentOperationScreen.textContent;
+  if (percentageButtonClicked) {
+    op2 = parseFloat(currentOperationScreen.textContent / 100);
+    percentageButtonClicked = false;
+  } else {
+    op2 = currentOperationScreen.textContent;
+  }
   currentOperationScreen.textContent = roundResult(
     operate(currentOperation, op1, op2)
   );
@@ -93,7 +115,13 @@ function handleKeyboardInput(e) {
   if (e.key === "=" || e.key === "Enter") evaluate();
   if (e.key === "Backspace") deleteNumber();
   if (e.key === "Escape") clear();
-  if (e.key === "+" || e.key === "-" || e.key === "*" || e.key === "/") {
+  if (
+    e.key === "+" ||
+    e.key === "-" ||
+    e.key === "*" ||
+    e.key === "/" ||
+    e.key === "%"
+  ) {
     setOperation(convertOperator(e.key));
   }
 }
@@ -102,6 +130,7 @@ function convertOperator(keyboardOperator) {
   if (keyboardOperator === "*") return "×";
   if (keyboardOperator === "+") return "+";
   if (keyboardOperator === "-") return "-";
+  if (keyboardOperator === "%") return "%";
 }
 
 function add(a, b) {
@@ -119,6 +148,10 @@ function divide(a, b) {
   return a / b;
 }
 
+function percent(a, b) {
+  return (a * b) / 100;
+}
+
 function operate(operator, a, b) {
   a = Number(a);
   b = Number(b);
@@ -134,7 +167,50 @@ function operate(operator, a, b) {
       else {
         return divide(a, b);
       }
+    case "%":
+      return percent(a, b);
     default:
       return null;
+  }
+}
+function applyPercentage() {
+  if (currentOperation === null || shouldResetScreen) return;
+  const inputText = currentOperationScreen.textContent;
+
+  // Check for cases like "85+43%", "85-43%", and "85*48%"
+  const matches = inputText.match(/^([\d.]+)([+\-*/])([\d.]+)%$/);
+
+  if (matches) {
+    const leftOperand = parseFloat(matches[1]);
+    const operator = matches[2];
+    const rightOperand = parseFloat(matches[3]);
+    let result;
+
+    switch (operator) {
+      case "+":
+        result = leftOperand + (leftOperand * rightOperand) / 100;
+        break;
+      case "-":
+        result = leftOperand - (leftOperand * rightOperand) / 100;
+        break;
+      case "*":
+        result = (leftOperand * rightOperand) / 100;
+        break;
+      case "/":
+        if (rightOperand !== 0) {
+          result = (leftOperand * 100) / rightOperand;
+        } else {
+          alert("You can't divide by 0!");
+          return;
+        }
+        break;
+    }
+
+    currentOperationScreen.textContent = roundResult(result);
+    lastOperationScreen.textContent = `${leftOperand} ${operator} ${rightOperand}% =`;
+    op1 = leftOperand;
+    op2 = result;
+    currentOperation = null;
+    shouldResetScreen = true;
   }
 }
